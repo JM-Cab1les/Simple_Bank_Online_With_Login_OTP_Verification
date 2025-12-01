@@ -1,0 +1,153 @@
+﻿@model Simple_Bank_Teller.Controllers.Models.DashboardModel
+
+<div class="container mt-4"> 
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>My Accounts</h2>
+        <a href="#" id="logout" class="text-primary"><i class="bi bi-gear"></i> Logout</a>
+    </div>
+
+    <h5>
+        Savings Accounts |  @Model.UserAccountInformation.LastName, @Model.UserAccountInformation.FirstName
+    </h5>
+    <input hidden id="accountID" value="@Model.UserAccountInformation.Id"/>
+    <input hidden id="membershipType" value="@Model.UserAccount.AccountType"/>
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center">
+
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-bank fs-3 me-3"></i>
+                        <div>
+                            <div class="fw-bold">@Model.MembersValueType.Type @Model.MembersValueType.HardCode
+                            </div>
+                            @{
+                                string accNo = Model.UserAccount.AccountNo.ToString().PadLeft(10, '0');
+                                string maskedAccNo = "****-***" + accNo.Substring(accNo.Length - 2);
+                            }
+                            @maskedAccNo
+
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#depositModal">Deposit</button>
+                                </div>
+                                <div class="col-lg-4">
+                                    <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#withdrawModal">Withdraw</button>
+                                </div>
+                            </div>
+                        </div>
+                       
+                    </div>
+
+                    @functions {
+                        string ToPeso(string value)
+                        {
+                            if (string.IsNullOrWhiteSpace(value)) return "0.00";
+                            return decimal.TryParse(value, out decimal amount) ? amount.ToString("N2") : "0.00";
+                        }
+                    }
+
+                    <div class="text-end">
+                        <div>Available Balance</div>
+                        <div class="fw-bold">PHP @(Model.TransactionValue == null ? "0.00" : ToPeso(Model.TransactionValue.AvailableBal))</div>
+                        <div>Current Balance</div>
+                        <div class="fw-bold">PHP @(Model.TransactionValue == null ? "0.00" : ToPeso(Model.TransactionValue.CurrentBal))</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+@* Partial Modal for Withdraw and Deposit *@
+
+@await Html.PartialAsync("~/Views/Modal/_DepositModal.cshtml", Model)
+@await Html.PartialAsync("~/Views/Modal/_WithdrawModal.cshtml", Model)
+
+
+@section Scripts {
+    <script>
+
+        const depositModal = document.getElementById('depositModal');
+
+        $(document).on('submit', 'form.transaction-form', function(e){
+            debugger;
+            e.preventDefault();
+            const form = this;
+            const amount = $('#depositAmount').val() || $('#withdrawAmount').val();
+            const accountID = $('#accountID').val();
+            const membershipType = $('#membershipType').val();
+            const transactionType = parseInt(form.dataset.transactionType);
+
+            if(amount < 5000 && transactionType == 1)
+            {     Swal.fire({
+                      icon: "error",
+                      title: "Oops...",
+                      text: "Minimum Deposit is PHP 5,000.00"
+                 });
+
+                 return;
+            }
+
+            var formData = {
+
+                AccountID: accountID,
+                MembershipType:  membershipType,
+                CurrentBal: amount,
+                AvailableBal: amount,
+                TransactionType: transactionType
+            };
+
+            $.ajax({
+                    url: "@Url.Action("AccountTransaction", "Dashboard")",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(formData),
+                    success: function(response){
+                        if (response.success) {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Success!",
+                                text: response.message,
+                                confirmButtonText: "OK",
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = "@Url.Action("Dashboard", "Dashboard")";
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Oops...",
+                                text: response.message || "Failed to Transaction"
+                            });
+                        }
+                    }
+                });
+
+        })
+
+
+        $('#logout').on('click', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Logout?',
+                text: "Are you sure you want to logout?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, logout',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if(result.isConfirmed){
+                        $.post("@Url.Action("Logout", "Account")", function() {
+                        window.location.href = "@Url.Action("LoginAccount", "Account")";
+                    });
+                }
+            })
+        })
+    </script>
+}

@@ -1,0 +1,150 @@
+﻿@model Simple_Bank_Teller.Controllers.Models.MaintenanceModel
+
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<div class="center">
+
+    
+
+    <form id="createAccountForm">
+
+        <div class="row g-3">
+            <h2 class="text-center">Create Account</h2>
+            <div class="col-md-4">
+                <label for="FirstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="FirstName" name="FirstName" required />
+            </div>
+
+            <div class="col-md-4">
+                <label for="MiddleName" class="form-label">Middle Name</label>
+                <input type="text" class="form-control" id="MiddleName" name="MiddleName" />
+            </div>
+
+            <div class="col-md-4">
+                <label for="LastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="LastName" name="LastName" required />
+            </div>
+
+            <div class="col-md-4">
+                <label for="Gender" class="form-label">Gender</label>
+                <select class="form-select" id="Gender" name="Gender">
+                    <option value="">Choose...</option>
+                    @foreach (var gender in Model.Gender)
+                    {
+                        <option value="@gender.Id">@gender.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="ContactNo" class="form-label">ContactNo</label>
+                <input type="text" class="form-control" id="ContactNo" name="ContactNo" required />
+            </div>
+            <div class="col-md-4">
+                <label for="Address" class="form-label">Address</label>
+                <input type="text" class="form-control" id="Address" name="Address" required />
+            </div>
+            <div class="col-md-4">
+                <label for="EmailAddress" class="form-label">EmailAddress</label>
+                <input type="text" class="form-control" id="EmailAddress" name="EmailAddress" required />
+            </div>
+
+
+           
+
+
+
+
+            <div id="message" class="mt-3"></div>
+        </div>
+        <div class="row g-3">
+            <h2 class="mt-2 text-center">Bank Account Information</h2>
+            <div class="col-md-4">
+                <label for="UserName" class="form-label">UserName</label>
+                <input type="text" class="form-control" id="UserName" name="UserName" required />
+            </div>
+
+            <div class="col-md-4">
+                <label for="Password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="Password" name="Password" />
+            </div>
+            <div class="col-md-4">
+                <label for="Membership" class="form-label">MembershipType</label>
+                <select class="form-select" id="Membership" name="Membership">
+                    <option value="">Choose...</option>
+                    @foreach (var membership in Model.MemberType)
+                    {
+                        <option value="@membership.Id">@membership.Type</option>
+                    }
+                </select>
+            </div>
+
+        </div>
+
+
+        <div class="col-12 mt-4">
+            <button type="submit" class="btn btn-primary">Create Account</button>
+            <button type="reset" class="btn btn-secondary ms-2">Clear</button>
+        </div>
+    </form>
+
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $("#createAccountForm").on("submit", function (e) {
+                debugger;
+                e.preventDefault();
+
+                var formData = {
+                        FirstName:    $("#FirstName").val().trim() || null,
+                        MiddleName:   $("#MiddleName").val().trim() || null,
+                        LastName:     $("#LastName").val().trim() || null,
+                        Gender:       $("#Gender").val() ? parseInt($("#Gender").val()) : null,
+                        ContactNo:    $("#ContactNo").val().trim() || null,          
+                        Address:      $("#Address").val().trim() || null,
+                        EmailAddress: $("#EmailAddress").val().trim() || null,
+                        UserName:     $("#UserName").val().trim() || null,
+                        Password:     $("#Password").val() || null,
+                        AccountType:  $("#Membership").val() ? parseInt($("#Membership").val()) : null
+                    };
+
+                $.ajax({
+                    url: "@Url.Action("AddAccount", "Account")",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(formData),
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Success!",
+                                html: response.message + "<br/><strong>Account No: " + response.accountNo + "</strong>",
+                                confirmButtonText: "OK"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = "@Url.Action("CreateAccount", "Account")";
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Oops...",
+                                text: response.message || "Failed to create account."
+                            });
+                        }
+                    },
+                    error: function (xhr, status, err) {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: "An unexpected error occurred. Please try again later."
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

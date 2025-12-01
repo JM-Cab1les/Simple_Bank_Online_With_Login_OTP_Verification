@@ -1,0 +1,93 @@
+﻿<div class="d-flex justify-content-center mt-5">
+    <div style="width: 350px;">
+        <h2 class="text-center">Login Account</h2>
+
+        <div class="mb-3">
+            <label for="UserName" class="form-label">UserName</label>
+            <input type="text" class="form-control" id="UserName" name="UserName" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="Password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="Password" name="Password" required />
+        </div>
+        <div class="mb-3 mt-3">
+            <button class="btn btn-primary" id="login">Login Account</button>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Modal/_OtpModal.cshtml")
+
+@section Scripts {
+
+<script>
+        $(document).ready(function () {
+            $('#login').on('click', function(){
+                debugger;
+                var formData = {
+                    UserName: $('#UserName').val(),
+                    Password: $('#Password').val()
+                }
+
+                $.ajax({
+                    url: "@Url.Action("Login", "Account")",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(formData),
+                    success: function(response){
+                        if (response.requireOtp) {
+                           Swal.fire({
+                                icon: "info",
+                                title: "OTP Sent",
+                                text: "Please check your phone for the OTP."
+                             });
+
+                             var otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+                             otpModal.show();
+                        } else if (!response.success) {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Oops...",
+                                text: response.message
+                            });
+                        }
+                    }
+                });
+ 
+            });
+
+            $('#verifyOtp').on('click', function(){
+                debugger;
+                 var data = { Otp: $('#Otp').val() };
+
+                 $.ajax({
+                     url: "@Url.Action("VerifyOtp", "Account")",
+                     type: "POST",
+                     contentType: "application/json",
+                     data: JSON.stringify(data),
+                     success: function(response) {
+
+                         if(response.success) {
+                             Swal.fire({
+                                 icon: "success",
+                                 title: "OTP Verified",
+                                 text: "Login Successful!"
+                             }).then(() => {
+                                 window.location.href = "@Url.Action("Dashboard", "Dashboard")"
+                             });
+                         }else {
+                             Swal.fire({
+                                  icon: "error",
+                                  title: "Invalid OTP",
+                                    text: response.message
+                             });
+                         }
+                     }
+                 })
+
+
+            })
+        });
+</script>
+}
