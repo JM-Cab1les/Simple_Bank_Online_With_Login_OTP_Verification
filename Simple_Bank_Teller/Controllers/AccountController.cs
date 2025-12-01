@@ -58,20 +58,20 @@ namespace Simple_Bank_Teller.Controllers
 
                     var account = await accountDataService_.GetAccountInformation(response.AccountInformationId);
 
-
                     var otp = new Random().Next(100000, 999999).ToString();
 
                     HttpContext.Session.SetString("OTP", otp);
+
                     HttpContext.Session.SetString("UserId", response.AccountInformationId.ToString());
+
                     HttpContext.Session.SetString("UserName", response.UserName);
 
                     string phone = account.ContactNo;
+
                     string msg = "Your login OTP is " + otp;
 
                     await SMSHelper.SendSmsAsync(phone, msg);
 
-
-                    //return Json(new { success = true, message = "Login Successfully", Id = response.AccountInformationId });
                     return Json(new { success = true, message = "OTP Sent", requireOtp = true });
 
                 }
